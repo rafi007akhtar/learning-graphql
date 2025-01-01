@@ -10,6 +10,10 @@ As I'm learning the basics of GraphQL from https://www.howtographql.com/, I will
 - GraphQL uses _resolver_ functions to collect the data requested by the client, and those provides insights on the bottlenecks in your system.
 - The GraphQL **Schema** serves a _contract_ between the client and the server, allowiing both teams to work completely independent of each other.
 - The **Schema Definition Language** (SDL) is the syntax for writing the schema.
+- The schema as three **Root Types**:
+  - `Query`,
+  - `Mutation`,
+  - `Subscription`.
 
 ### Examples of types
 
@@ -25,12 +29,12 @@ type Post {
 # a Person type with name, age and posts as attributes
 type Person {
   name: String!
-  age: number!
+  age: Int!
   posts: [Post!]! # this means an array of posts, so a Person can author many posts in this case
 }
 ```
 
-### Examples of fetching data
+### Examples of fetching data with queries
 
 This corresponds to GET calls with REST APIs, where data is just fetched.
 
@@ -84,7 +88,7 @@ Change in the type:
 Person {
     id: ID! # NOTE: this line
     name: String!
-    age: number!
+    age: Int!
     post: [Post!]!
 }
 ```
@@ -96,5 +100,110 @@ mutation {
   createPerson(name: "Rafi", age: 29) {
     id
   }
+}
+```
+
+### Example of subscriptions
+
+They represent a _stream_ of data, like Observables in Angular. Each subscription starts with a `subscription` keyword.
+
+To get the name and age of every new person:
+
+```graphql
+subscription {
+  newPerson {
+    name
+    age
+  }
+}
+```
+
+### Examples of root types
+
+To enable the following `allPersons` type:
+
+```graphql
+allPersons {
+    name
+}
+```
+
+we need to create the following Query:
+
+```graphql
+type Query {
+  # the `last` parameter is optional, which can be used to limit the number of Persons sent
+  allPersons(last: Int): [Person!]!
+}
+```
+
+To enable the following mutation:
+
+```graphql
+mutation {
+  createPerson(name: "Rafi", age: 29) {
+    id
+  }
+}
+```
+
+we need to create the following Mutation:
+
+```graphql
+type Mutation {
+  # NOTE: the return type is specified with a `:`, like in Typescript
+  createPerson(name: String!, age: Int!): Person!
+}
+```
+
+To enable the following subscription:
+
+```graphql
+subscription {
+  newPerson {
+    name
+    age
+  }
+}
+```
+
+we need to create the following Subscription:
+
+```graphql
+type Subscription {
+    newPerson(): Person!
+}
+```
+
+### Putting everything together
+
+This is the full schema for CRUD operations and subscriptions on `Person` and `Post` (an `id` attribute was also added to `Post`).
+
+```graphql
+type Query {
+  allPersons(last: Int): [Person!]!
+  allPosts(last: Int): [Post!]!
+}
+
+type Mutation {
+  createPerson(name: String!, age: Int!): Person!
+  updatePerson(id: ID!, name: String!, age: Int!): Person!
+  deletePerson(id: ID!): Person!
+}
+
+type Subscription {
+  newPerson: Person!
+}
+
+type Person {
+  id: ID!
+  name: String!
+  age: Int!
+  posts: [Post!]!
+}
+
+type Post {
+  title: String!
+  author: Person!
 }
 ```
